@@ -1,98 +1,470 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Icon from "@expo/vector-icons/MaterialCommunityIcons";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  IconButton,
+  SectionHeader,
+  SegmentTabs,
+  StatusBadge,
+} from "@/components/ui/primitives";
+import { matches, type Match } from "@/mocks/data";
+import { brand, colors, layout, radius, shadows, space, type } from "@/theme";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+const navigate = (path: string) => router.push(path as never);
+const tabs = ["Upcoming", "Live", "Completed"] as const;
+type MatchTab = (typeof tabs)[number];
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+function Header() {
+  const insets = useSafeAreaInsets();
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
+      <View>
+        <Text maxFontSizeMultiplier={1.3} style={styles.brand}>
+          {brand.name}
+        </Text>
+        <Text maxFontSizeMultiplier={1.3} style={styles.tag}>
+          {brand.country.toUpperCase()} FANTASY CRICKET · DEMO
+        </Text>
+      </View>
+      <View style={styles.notification}>
+        <IconButton
+          label="Open notifications"
+          onPress={() => navigate("/notifications")}
+        >
+          <Icon name="bell-outline" size={22} color={colors.onPrimary} />
+        </IconButton>
+        <View style={styles.dot} />
+      </View>
+    </View>
   );
 }
-
-export default function HomeScreen() {
+function MatchCard({ match }: { match: Match }) {
+  const tone =
+    match.status === "LIVE"
+      ? "live"
+      : match.status === "COMPLETED"
+        ? "success"
+        : "info";
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${match.a} versus ${match.b}`}
+      onPress={() => navigate(`/match/${match.id}`)}
+      android_ripple={{ color: colors.blueSoft }}
+      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+    >
+      <View style={styles.cardTop}>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          numberOfLines={1}
+          style={styles.series}
+        >
+          {match.series}
+        </Text>
+        <StatusBadge
+          label={match.status === "LIVE" ? "LIVE · DEMO" : match.status}
+          tone={tone}
+        />
+      </View>
+      <View style={styles.fixture}>
+        <Team code={match.aShort} name={match.a} tone="blue" />
+        <View style={styles.fixtureCenter}>
+          <Text style={styles.vs}>VS</Text>
+          <Text
+            maxFontSizeMultiplier={1.3}
+            numberOfLines={2}
+            style={styles.time}
+          >
+            {match.time}
+          </Text>
+        </View>
+        <Team code={match.bShort} name={match.b} tone="amber" />
+      </View>
+      <View style={styles.divider} />
+      <View style={styles.cardBottom}>
+        <Text
+          maxFontSizeMultiplier={1.3}
+          numberOfLines={1}
+          style={styles.venue}
+        >
+          <Icon name="map-marker-outline" size={14} color={colors.muted} />{" "}
+          {match.venue}
+        </Text>
+        <Text style={styles.sample}>Sample fixture</Text>
+      </View>
+    </Pressable>
+  );
+}
+function Team({
+  code,
+  name,
+  tone,
+}: {
+  code: string;
+  name: string;
+  tone: "blue" | "amber";
+}) {
+  return (
+    <View style={styles.team}>
+      <View
+        style={[
+          styles.crest,
+          tone === "blue" ? styles.blueCrest : styles.amberCrest,
+        ]}
+      >
+        <Text style={styles.crestText}>{code.slice(0, 1)}</Text>
+      </View>
+      <Text maxFontSizeMultiplier={1.3} style={styles.teamCode}>
+        {code}
+      </Text>
+      <Text
+        maxFontSizeMultiplier={1.3}
+        numberOfLines={1}
+        style={styles.teamName}
+      >
+        {name}
+      </Text>
+    </View>
+  );
+}
+function BottomTabs() {
+  const items: [React.ComponentProps<typeof Icon>["name"], string, string][] = [
+    ["home-variant", "Home", "/"],
+    ["calendar-blank-outline", "My Matches", "/my-matches"],
+    ["trophy-outline", "Contests", "/contests"],
+    ["wallet-outline", "Wallet", "/wallet"],
+    ["account-circle-outline", "Profile", "/profile"],
+  ];
+  return (
+    <View style={styles.nav}>
+      {items.map(([icon, label, path]) => (
+        <Pressable
+          accessibilityRole="tab"
+          accessibilityState={{ selected: label === "Home" }}
+          key={label}
+          onPress={() => router.replace(path as never)}
+          style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}
+        >
+          <Icon
+            name={icon}
+            size={22}
+            color={label === "Home" ? colors.blue : colors.muted}
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
+          <Text
+            maxFontSizeMultiplier={1.3}
+            style={[styles.navLabel, label === "Home" && styles.navLabelActive]}
+          >
+            {label}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+export default function Home() {
+  const [selectedTab, setSelectedTab] = useState<MatchTab>("Upcoming");
+  const visibleMatches = matches.filter(
+    (match) => match.status === selectedTab.toUpperCase(),
+  );
+  return (
+    <View style={styles.page}>
+      <Header />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigate("/wallet")}
+          style={({ pressed }) => [styles.wallet, pressed && styles.pressed]}
+        >
+          <View style={styles.walletMark}>
+            <Icon name="wallet-outline" size={23} color={colors.blue} />
+          </View>
+          <View style={styles.flex}>
+            <Text style={styles.walletLabel}>DEMO WALLET</Text>
+            <Text maxFontSizeMultiplier={1.3} style={styles.walletMoney}>
+              {brand.currency} 1,240.00
+            </Text>
+            <Text maxFontSizeMultiplier={1.3} style={styles.walletHint}>
+              Sample balance · no real money
+            </Text>
+          </View>
+          <Icon name="chevron-right" size={24} color={colors.blue} />
+        </Pressable>
+        <View style={styles.hero}>
+          <Icon
+            name="cricket"
+            size={72}
+            color={colors.navySoft}
+            style={styles.heroIcon}
           />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+          <Text style={styles.heroOverline}>INDIA T20 DEMO SERIES</Text>
+          <Text maxFontSizeMultiplier={1.3} style={styles.heroTitle}>
+            Pick your XI. Own the arena.
+          </Text>
+          <Text maxFontSizeMultiplier={1.3} style={styles.heroText}>
+            Create a local demo team, choose Captain and Vice Captain, and
+            follow sample points.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigate("/fantasy-team/create")}
+            style={({ pressed }) => [styles.heroCta, pressed && styles.pressed]}
+          >
+            <Text style={styles.heroCtaText}>Build your team</Text>
+            <Icon name="arrow-right" size={18} color={colors.navy} />
+          </Pressable>
+        </View>
+        <SectionHeader
+          title="Featured matches"
+          actionLabel="See all"
+          onAction={() => navigate("/all-matches")}
+        />
+        <SegmentTabs
+          values={tabs}
+          value={selectedTab}
+          onChange={setSelectedTab}
+        />
+        <View style={styles.matchList}>
+          {visibleMatches.map((match) => (
+            <MatchCard key={match.id} match={match} />
+          ))}
+        </View>
+        <SectionHeader title="Play smarter" />
+        <View style={styles.tip}>
+          <Icon name="shield-check-outline" size={24} color={colors.green} />
+          <View style={styles.flex}>
+            <Text maxFontSizeMultiplier={1.3} style={styles.tipTitle}>
+              Practice with confidence
+            </Text>
+            <Text maxFontSizeMultiplier={1.3} style={styles.tipText}>
+              Every contest, score and wallet value is clearly marked as local
+              demo data.
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+      <BottomTabs />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  page: { flex: 1, backgroundColor: colors.canvas },
+  header: {
+    backgroundColor: colors.navy,
+    paddingHorizontal: space.lg,
+    paddingBottom: space.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  brand: { color: colors.onPrimary, fontSize: type.page, fontWeight: "900" },
+  tag: {
+    color: colors.blueSoft,
+    fontSize: type.micro,
+    fontWeight: "800",
+    letterSpacing: 0.7,
+    marginTop: space.xxs,
+  },
+  notification: { position: "relative" },
+  dot: {
+    position: "absolute",
+    top: space.xs,
+    right: space.xs,
+    width: space.xs,
+    height: space.xs,
+    borderRadius: radius.full,
+    backgroundColor: colors.amber,
+  },
+  content: {
+    width: "100%",
+    maxWidth: layout.maxContentWidth,
+    alignSelf: "center",
+    padding: space.md,
+    paddingBottom: space.xl,
+  },
+  flex: { flex: 1 },
+  pressed: { opacity: 0.88, transform: [{ scale: 0.97 }] },
+  wallet: {
+    minHeight: layout.controlHeight + space.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    padding: space.sm,
+    marginBottom: space.md,
+    backgroundColor: colors.infoSoft,
+    borderRadius: radius.md,
+    borderColor: colors.blueSoft,
+    borderWidth: 1,
+  },
+  walletMark: {
+    width: layout.iconButton,
+    height: layout.iconButton,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.sm,
+    backgroundColor: colors.blueSoft,
+  },
+  walletLabel: {
+    color: colors.blue,
+    fontSize: type.micro,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+  },
+  walletMoney: { color: colors.navy, fontSize: type.page, fontWeight: "900" },
+  walletHint: { color: colors.muted, fontSize: type.caption },
+  hero: {
+    overflow: "hidden",
+    backgroundColor: colors.navy,
+    borderRadius: radius.lg,
+    padding: space.lg,
+    marginBottom: space.xl,
+  },
+  heroIcon: { position: "absolute", top: space.xs, right: -space.xs },
+  heroOverline: {
+    color: colors.amber,
+    fontSize: type.micro,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    color: colors.onPrimary,
+    fontSize: type.display,
+    lineHeight: type.lineDisplay,
+    fontWeight: "900",
+    marginTop: space.xs,
+    maxWidth: "82%",
+  },
+  heroText: {
+    color: colors.blueSoft,
+    fontSize: type.bodySmall,
+    lineHeight: type.lineBody,
+    marginTop: space.sm,
+    maxWidth: "86%",
+  },
+  heroCta: {
+    minHeight: layout.controlHeight,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.xs,
+    paddingHorizontal: space.md,
+    marginTop: space.lg,
+    borderRadius: radius.sm,
+    backgroundColor: colors.amber,
+  },
+  heroCtaText: {
+    color: colors.navy,
+    fontSize: type.bodySmall,
+    fontWeight: "900",
+  },
+  matchList: { marginTop: space.sm },
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
+    padding: space.md,
+    marginBottom: space.sm,
+    overflow: "hidden",
+    ...shadows.md,
+  },
+  cardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: space.sm,
+  },
+  series: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    color: colors.muted,
+    fontSize: type.micro,
+    fontWeight: "800",
   },
-  safeArea: {
+  fixture: {
+    minHeight: 104,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginVertical: space.sm,
+  },
+  team: { flex: 1, alignItems: "center" },
+  crest: {
+    width: layout.iconButton - space.xs,
+    height: layout.iconButton - space.xs,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.full,
+    marginBottom: space.xxs,
+  },
+  blueCrest: { backgroundColor: colors.blueSoft },
+  amberCrest: { backgroundColor: colors.amberSoft },
+  crestText: { color: colors.navy, fontWeight: "900" },
+  teamCode: { color: colors.text, fontSize: type.section, fontWeight: "900" },
+  teamName: {
+    color: colors.muted,
+    fontSize: type.micro,
+    marginTop: space.xxs,
+    textAlign: "center",
+  },
+  fixtureCenter: { width: 92, alignItems: "center" },
+  vs: { color: colors.muted, fontSize: type.caption, fontWeight: "900" },
+  time: {
+    color: colors.red,
+    fontSize: type.micro,
+    fontWeight: "800",
+    marginTop: space.xxs,
+    textAlign: "center",
+  },
+  divider: { height: 1, backgroundColor: colors.border },
+  cardBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: space.sm,
+    marginTop: space.sm,
+  },
+  venue: { flex: 1, color: colors.muted, fontSize: type.micro },
+  sample: { color: colors.muted, fontSize: type.micro },
+  tip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    padding: space.sm,
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
+    ...shadows.sm,
+  },
+  tipTitle: { color: colors.text, fontSize: type.bodySmall, fontWeight: "900" },
+  tipText: {
+    color: colors.muted,
+    fontSize: type.caption,
+    lineHeight: type.lineCaption,
+    marginTop: space.xxs,
+  },
+  nav: {
+    minHeight: layout.tabBarHeight,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    backgroundColor: colors.card,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  navItem: {
+    minHeight: layout.controlHeight,
+    minWidth: 56,
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  navLabel: {
+    color: colors.muted,
+    fontSize: type.micro,
+    fontWeight: "800",
+    marginTop: space.xxs,
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  navLabelActive: { color: colors.blue },
 });

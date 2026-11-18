@@ -1,0 +1,10 @@
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { EmptyState, SegmentTabs, StatusBadge } from '@/components/ui/primitives';
+import { matches } from '@/mocks/data';
+import { colors, radius, shadows, space, type } from '@/theme';
+import { AppShell } from '@/screens/shared/app-shell';
+import { useState } from 'react';
+const tabs = ['Upcoming', 'Live', 'Completed'] as const;
+export function MatchListScreen() { const [tab, setTab] = useState<(typeof tabs)[number]>('Upcoming'); const list = matches.filter((match) => match.status === tab.toUpperCase()); return <AppShell title="My Matches" active="My Matches"><ScrollView contentContainerStyle={styles.content}><SegmentTabs values={tabs} value={tab} onChange={setTab} />{list.length === 0 ? <EmptyState title="No sample matches" message="Choose another status to view local demo fixtures." /> : <View style={styles.list}>{list.map((match) => <Pressable key={match.id} onPress={() => router.push(`/match/${match.id}`)} style={styles.card}><View style={styles.row}><Text numberOfLines={1} style={styles.series}>{match.series}</Text><StatusBadge label={match.status === 'LIVE' ? 'LIVE · DEMO' : match.status} tone={match.status === 'LIVE' ? 'live' : 'info'} /></View><Text style={styles.teams}>{match.aShort} <Text style={styles.vs}>vs</Text> {match.bShort}</Text><Text style={styles.meta}>{match.time} · {match.venue}</Text></Pressable>)}</View>}</ScrollView></AppShell>; }
+const styles = StyleSheet.create({ content: { padding: space.md, paddingBottom: space.xxl }, list: { gap: space.sm, marginTop: space.md }, card: { backgroundColor: colors.card, borderRadius: radius.md, padding: space.md, ...shadows.sm }, row: { flexDirection: 'row', justifyContent: 'space-between', gap: space.sm }, series: { flex: 1, color: colors.muted, fontSize: type.caption, fontWeight: '800' }, teams: { color: colors.text, fontSize: type.section, fontWeight: '900', marginTop: space.md }, vs: { color: colors.muted, fontSize: type.bodySmall }, meta: { color: colors.muted, fontSize: type.caption, marginTop: space.xs }, });
