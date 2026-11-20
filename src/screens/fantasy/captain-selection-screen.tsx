@@ -96,7 +96,7 @@ export function CaptainSelectionScreen() {
               <Text
                 style={[
                   styles.choiceText,
-                  viceCaptain === player.id && styles.choiceTextOn,
+                  viceCaptain === player.id && styles.viceTextOn,
                 ]}
               >
                 VC
@@ -184,8 +184,8 @@ const styles = StyleSheet.create({
   name: { color: colors.text, fontSize: type.bodySmall, fontWeight: "900" },
   meta: { color: colors.muted, fontSize: type.caption, marginTop: space.xxs },
   choice: {
-    minWidth: 40,
-    minHeight: 40,
+    minWidth: layout.iconButton,
+    minHeight: layout.iconButton,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: radius.full,
@@ -195,5 +195,6 @@ const styles = StyleSheet.create({
   captainOn: { backgroundColor: colors.blue, borderColor: colors.blue },
   viceOn: { backgroundColor: colors.amber, borderColor: colors.amber },
   choiceText: { color: colors.blue, fontSize: type.micro, fontWeight: "900" },
+  viceTextOn: { color: colors.navy },
   choiceTextOn: { color: colors.onPrimary },
 });

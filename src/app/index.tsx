@@ -1,3 +1,4 @@
+import { BottomTabs } from '@/screens/shared/app-shell';
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Icon from "@expo/vector-icons/MaterialCommunityIcons";
@@ -129,40 +130,6 @@ function Team({
     </View>
   );
 }
-function BottomTabs() {
-  const items: [React.ComponentProps<typeof Icon>["name"], string, string][] = [
-    ["home-variant", "Home", "/"],
-    ["calendar-blank-outline", "My Matches", "/my-matches"],
-    ["trophy-outline", "Contests", "/contests"],
-    ["wallet-outline", "Wallet", "/wallet"],
-    ["account-circle-outline", "Profile", "/profile"],
-  ];
-  return (
-    <View style={styles.nav}>
-      {items.map(([icon, label, path]) => (
-        <Pressable
-          accessibilityRole="tab"
-          accessibilityState={{ selected: label === "Home" }}
-          key={label}
-          onPress={() => router.replace(path as never)}
-          style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}
-        >
-          <Icon
-            name={icon}
-            size={22}
-            color={label === "Home" ? colors.blue : colors.muted}
-          />
-          <Text
-            maxFontSizeMultiplier={1.3}
-            style={[styles.navLabel, label === "Home" && styles.navLabelActive]}
-          >
-            {label}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
-}
 export default function Home() {
   const [selectedTab, setSelectedTab] = useState<MatchTab>("Upcoming");
   const visibleMatches = matches.filter(
@@ -175,6 +142,29 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
+        <View style={styles.hero}>
+          <Icon
+            name="cricket"
+            size={72}
+            color={colors.navySoft}
+            style={styles.heroIcon}
+          />
+          <Text style={styles.heroOverline}>INDIA T20 DEMO SERIES</Text>
+          <Text maxFontSizeMultiplier={1.3} style={styles.heroTitle}>
+            Mumbai vs Chennai
+          </Text>
+          <Text maxFontSizeMultiplier={1.3} style={styles.heroText}>
+            Pick 11 players for the India T20 opener at Wankhede Stadium.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigate("/fantasy-team/create")}
+            style={({ pressed }) => [styles.heroCta, pressed && styles.pressed]}
+          >
+            <Text style={styles.heroCtaText}>Build your team</Text>
+            <Icon name="arrow-right" size={18} color={colors.navy} />
+          </Pressable>
+        </View>
         <Pressable
           accessibilityRole="button"
           onPress={() => navigate("/wallet")}
@@ -194,30 +184,6 @@ export default function Home() {
           </View>
           <Icon name="chevron-right" size={24} color={colors.blue} />
         </Pressable>
-        <View style={styles.hero}>
-          <Icon
-            name="cricket"
-            size={72}
-            color={colors.navySoft}
-            style={styles.heroIcon}
-          />
-          <Text style={styles.heroOverline}>INDIA T20 DEMO SERIES</Text>
-          <Text maxFontSizeMultiplier={1.3} style={styles.heroTitle}>
-            Pick your XI. Own the arena.
-          </Text>
-          <Text maxFontSizeMultiplier={1.3} style={styles.heroText}>
-            Create a local demo team, choose Captain and Vice Captain, and
-            follow sample points.
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => navigate("/fantasy-team/create")}
-            style={({ pressed }) => [styles.heroCta, pressed && styles.pressed]}
-          >
-            <Text style={styles.heroCtaText}>Build your team</Text>
-            <Icon name="arrow-right" size={18} color={colors.navy} />
-          </Pressable>
-        </View>
         <SectionHeader
           title="Featured matches"
           actionLabel="See all"
@@ -233,21 +199,8 @@ export default function Home() {
             <MatchCard key={match.id} match={match} />
           ))}
         </View>
-        <SectionHeader title="Play smarter" />
-        <View style={styles.tip}>
-          <Icon name="shield-check-outline" size={24} color={colors.green} />
-          <View style={styles.flex}>
-            <Text maxFontSizeMultiplier={1.3} style={styles.tipTitle}>
-              Practice with confidence
-            </Text>
-            <Text maxFontSizeMultiplier={1.3} style={styles.tipText}>
-              Every contest, score and wallet value is clearly marked as local
-              demo data.
-            </Text>
-          </View>
-        </View>
       </ScrollView>
-      <BottomTabs />
+      <BottomTabs active="Home" />
     </View>
   );
 }

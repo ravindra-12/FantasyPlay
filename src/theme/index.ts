@@ -1,5 +1,6 @@
 export const colors = {
-  navy: '#172554', blue: '#2563EB', amber: '#F59E0B', green: '#16A34A', red: '#DC2626',
+  navy: '#102843', blue: '#175AC4', amber: '#FFBE52', green: '#18834F', red: '#BD2940',
+  pitch: '#126242', liveSoft: '#FDE7EB',
   canvas: '#F5F7FB', card: '#FFFFFF', text: '#0F172A', muted: '#64748B', border: '#E2E8F0', softBlue: '#EFF6FF',
   onPrimary: '#FFFFFF', navySoft: '#263972', blueSoft: '#DBEAFE', amberSoft: '#FEF3C7', successSoft: '#DCFCE7',
   warning: '#B45309', warningSoft: '#FFF7E5', info: '#1D4ED8', infoSoft: '#EFF6FF', live: '#DC2626',

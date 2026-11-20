@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { players } from '@/mocks/data';
 
 type TeamState = {
@@ -19,7 +19,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   const [captain, setCaptain] = useState('');
   const [viceCaptain, setViceCaptain] = useState('');
   const [saved, setSaved] = useState(false);
-  const toggle = (id: string) => {
+  const toggle = useCallback((id: string) => {
     if (selected.includes(id)) {
       setSelected((current) => current.filter((playerId) => playerId !== id));
       if (captain === id) setCaptain('');
@@ -34,14 +34,14 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     setSelected((current) => [...current, id]);
     setSaved(false);
     return true;
-  };
+  }, [selected, captain, viceCaptain]);
   const value = useMemo(() => ({
     selected, captain, viceCaptain, saved, toggle,
     chooseCaptain: (id: string) => { if (selected.includes(id)) { setCaptain(id); if (id === viceCaptain) setViceCaptain(''); setSaved(false); } },
     chooseVice: (id: string) => { if (selected.includes(id)) { setViceCaptain(id); if (id === captain) setCaptain(''); setSaved(false); } },
     save: () => setSaved(true),
     reset: () => { setSelected([]); setCaptain(''); setViceCaptain(''); setSaved(false); },
-  }), [selected, captain, viceCaptain, saved]);
+  }), [selected, captain, viceCaptain, saved, toggle]);
   return <TeamContext.Provider value={value}>{children}</TeamContext.Provider>;
 }
 export function useTeam() { const value = useContext(TeamContext); if (!value) throw new Error('TeamProvider missing'); return value; }
